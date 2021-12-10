@@ -5,15 +5,15 @@ enums › adt_trailing
  (type $none_=>_i32 (func (result i32)))
  (import \"_grainEnv\" \"mem\" (memory $0 0))
  (import \"_grainEnv\" \"tbl\" (table $tbl 0 funcref))
- (elem $elem (global.get $import__grainEnv_0_relocBase_0) $Cheese_1156)
+ (elem $elem (global.get $import__grainEnv_0_relocBase_0) $Cheese_1154)
  (import \"_grainEnv\" \"relocBase\" (global $import__grainEnv_0_relocBase_0 i32))
  (import \"_grainEnv\" \"moduleRuntimeId\" (global $import__grainEnv_0_moduleRuntimeId_0 i32))
  (import \"GRAIN$MODULE$runtime/gc\" \"GRAIN$EXPORT$malloc\" (global $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$malloc_0 (mut i32)))
  (import \"GRAIN$MODULE$runtime/gc\" \"GRAIN$EXPORT$incRef\" (global $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$incRef_0 (mut i32)))
- (import \"GRAIN$MODULE$runtime/gc\" \"GRAIN$EXPORT$decRefIgnoreZeros\" (global $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRefIgnoreZeros_0 (mut i32)))
+ (import \"GRAIN$MODULE$runtime/gc\" \"GRAIN$EXPORT$decRef\" (global $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRef_0 (mut i32)))
  (import \"GRAIN$MODULE$runtime/gc\" \"malloc\" (func $import_GRAIN$MODULE$runtime/gc_0_malloc_0 (param i32 i32) (result i32)))
  (import \"GRAIN$MODULE$runtime/gc\" \"incRef\" (func $import_GRAIN$MODULE$runtime/gc_0_incRef_0 (param i32 i32) (result i32)))
- (import \"GRAIN$MODULE$runtime/gc\" \"decRefIgnoreZeros\" (func $import_GRAIN$MODULE$runtime/gc_0_decRefIgnoreZeros_0 (param i32 i32) (result i32)))
+ (import \"GRAIN$MODULE$runtime/gc\" \"decRef\" (func $import_GRAIN$MODULE$runtime/gc_0_decRef_0 (param i32 i32) (result i32)))
  (global $global_1 (mut i32) (i32.const 0))
  (global $global_0 (mut i32) (i32.const 0))
  (global $global_3 i32 (i32.const 1))
@@ -23,7 +23,7 @@ enums › adt_trailing
  (export \"_gmain\" (func $_gmain))
  (export \"_start\" (func $_start))
  (export \"GRAIN$TABLE_SIZE\" (global $global_3))
- (func $Cheese_1156 (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $Cheese_1154 (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (tuple.extract 0
@@ -52,7 +52,7 @@ enums › adt_trailing
       )
       (i32.store offset=8
        (local.get $2)
-       (i32.const 2311)
+       (i32.const 2307)
       )
       (i32.store offset=12
        (local.get $2)
@@ -76,14 +76,14 @@ enums › adt_trailing
    )
   )
   (drop
-   (call $import_GRAIN$MODULE$runtime/gc_0_decRefIgnoreZeros_0
-    (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRefIgnoreZeros_0)
+   (call $import_GRAIN$MODULE$runtime/gc_0_decRef_0
+    (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRef_0)
     (local.get $0)
    )
   )
   (drop
-   (call $import_GRAIN$MODULE$runtime/gc_0_decRefIgnoreZeros_0
-    (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRefIgnoreZeros_0)
+   (call $import_GRAIN$MODULE$runtime/gc_0_decRef_0
+    (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRef_0)
     (local.get $1)
    )
   )
@@ -127,7 +127,7 @@ enums › adt_trailing
           )
           (i64.store offset=24
            (local.get $0)
-           (i64.const 85899347075)
+           (i64.const 85899347073)
           )
           (i64.store offset=32
            (local.get $0)
@@ -206,8 +206,8 @@ enums › adt_trailing
          )
          (local.get $0)
         )
-        (call $import_GRAIN$MODULE$runtime/gc_0_decRefIgnoreZeros_0
-         (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRefIgnoreZeros_0)
+        (call $import_GRAIN$MODULE$runtime/gc_0_decRef_0
+         (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRef_0)
          (global.get $global_0)
         )
        )
@@ -248,7 +248,7 @@ enums › adt_trailing
          )
          (i32.store offset=8
           (local.get $0)
-          (i32.const 2311)
+          (i32.const 2307)
          )
          (i32.store offset=12
           (local.get $0)
@@ -260,8 +260,8 @@ enums › adt_trailing
          )
          (local.get $0)
         )
-        (call $import_GRAIN$MODULE$runtime/gc_0_decRefIgnoreZeros_0
-         (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRefIgnoreZeros_0)
+        (call $import_GRAIN$MODULE$runtime/gc_0_decRef_0
+         (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRef_0)
          (global.get $global_1)
         )
        )

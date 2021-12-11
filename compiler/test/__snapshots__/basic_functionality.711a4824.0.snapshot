@@ -103,7 +103,6 @@ basic functionality › pattern_match_unsafe_wasm
  )
  (func $foo_1156 (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
-  (local $3 i32)
   (block $switch.31_outer (result i32)
    (drop
     (block $switch.31_branch_1 (result i32)
@@ -146,27 +145,7 @@ basic functionality › pattern_match_unsafe_wasm
                          (i32.const 31)
                         )
                         (i32.const 1)
-                        (if (result i32)
-                         (i32.shr_u
-                          (local.tee $2
-                           (tuple.extract 0
-                            (tuple.make
-                             (i32.or
-                              (i32.shl
-                               (i32.eq
-                                (local.get $1)
-                                (i32.const 2)
-                               )
-                               (i32.const 31)
-                              )
-                              (i32.const 2147483646)
-                             )
-                             (i32.const 0)
-                            )
-                           )
-                          )
-                          (i32.const 31)
-                         )
+                        (select
                          (i32.const 3)
                          (select
                           (i32.const 5)
@@ -235,25 +214,43 @@ basic functionality › pattern_match_unsafe_wasm
                            )
                           )
                           (i32.shr_u
-                           (local.tee $3
-                            (tuple.extract 0
-                             (tuple.make
-                              (i32.or
-                               (i32.shl
-                                (i32.eq
-                                 (local.get $1)
-                                 (i32.const 3)
-                                )
-                                (i32.const 31)
+                           (tuple.extract 0
+                            (tuple.make
+                             (i32.or
+                              (i32.shl
+                               (i32.eq
+                                (local.get $1)
+                                (i32.const 3)
                                )
-                               (i32.const 2147483646)
+                               (i32.const 31)
                               )
-                              (i32.const 0)
+                              (i32.const 2147483646)
                              )
+                             (i32.const 0)
                             )
                            )
                            (i32.const 31)
                           )
+                         )
+                         (i32.shr_u
+                          (local.tee $2
+                           (tuple.extract 0
+                            (tuple.make
+                             (i32.or
+                              (i32.shl
+                               (i32.eq
+                                (local.get $1)
+                                (i32.const 2)
+                               )
+                               (i32.const 31)
+                              )
+                              (i32.const 2147483646)
+                             )
+                             (i32.const 0)
+                            )
+                           )
+                          )
+                          (i32.const 31)
                          )
                         )
                        )
@@ -296,7 +293,7 @@ basic functionality › pattern_match_unsafe_wasm
                    )
                    (local.get $1)
                   )
-                  (local.get $3)
+                  (i32.const 0)
                  )
                 )
                )
@@ -441,80 +438,62 @@ basic functionality › pattern_match_unsafe_wasm
  (func $_gmain (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local.set $0
+  (i32.store offset=16
    (tuple.extract 0
     (tuple.make
-     (block (result i32)
-      (i32.store offset=16
-       (local.tee $0
-        (tuple.extract 0
-         (tuple.make
-          (local.tee $1
+     (local.tee $1
+      (tuple.extract 0
+       (tuple.make
+        (block (result i32)
+         (i32.store
+          (local.tee $0
            (tuple.extract 0
             (tuple.make
-             (block (result i32)
-              (i32.store
-               (local.tee $0
-                (tuple.extract 0
-                 (tuple.make
-                  (call $import_GRAIN$MODULE$runtime/gc_0_malloc_0
-                   (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$malloc_0)
-                   (i32.const 20)
-                  )
-                  (i32.const 0)
-                 )
-                )
-               )
-               (i32.const 7)
-              )
-              (i32.store offset=4
-               (local.get $0)
-               (i32.const 1)
-              )
-              (i32.store offset=8
-               (local.get $0)
-               (global.get $import__grainEnv_0_relocBase_0)
-              )
-              (i32.store offset=12
-               (local.get $0)
-               (i32.const 1)
-              )
-              (local.get $0)
+             (call $import_GRAIN$MODULE$runtime/gc_0_malloc_0
+              (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$malloc_0)
+              (i32.const 20)
              )
-             (call $import_GRAIN$MODULE$runtime/gc_0_decRefIgnoreZeros_0
-              (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRefIgnoreZeros_0)
-              (i32.const 0)
-             )
+             (i32.const 0)
             )
            )
           )
-          (local.get $0)
+          (i32.const 7)
          )
+         (i32.store offset=4
+          (local.get $0)
+          (i32.const 1)
+         )
+         (i32.store offset=8
+          (local.get $0)
+          (global.get $import__grainEnv_0_relocBase_0)
+         )
+         (i32.store offset=12
+          (local.get $0)
+          (i32.const 1)
+         )
+         (local.get $0)
         )
-       )
-       (call $import_GRAIN$MODULE$runtime/gc_0_incRef_0
-        (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$incRef_0)
-        (global.get $import_pervasives_1181_print_1182)
-       )
-      )
-      (call $test_1155
-       (call $import_GRAIN$MODULE$runtime/gc_0_incRef_0
-        (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$incRef_0)
-        (local.get $1)
+        (call $import_GRAIN$MODULE$runtime/gc_0_decRefIgnoreZeros_0
+         (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRefIgnoreZeros_0)
+         (i32.const 0)
+        )
        )
       )
      )
      (local.get $0)
     )
    )
+   (call $import_GRAIN$MODULE$runtime/gc_0_incRef_0
+    (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$incRef_0)
+    (global.get $import_pervasives_1181_print_1182)
+   )
   )
-  (drop
-   (call $import_GRAIN$MODULE$runtime/gc_0_decRefIgnoreZeros_0
-    (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$decRefIgnoreZeros_0)
+  (call $test_1155
+   (call $import_GRAIN$MODULE$runtime/gc_0_incRef_0
+    (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$incRef_0)
     (local.get $1)
    )
   )
-  (local.get $0)
  )
  (func $_start (; has Stack IR ;)
   (drop

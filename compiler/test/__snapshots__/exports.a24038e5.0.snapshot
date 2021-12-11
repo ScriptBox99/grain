@@ -14,14 +14,9 @@ exports › export4
  (export \"_start\" (func $_start))
  (export \"GRAIN$TABLE_SIZE\" (global $global_1))
  (func $_gmain (; has Stack IR ;) (result i32)
-  (tuple.extract 0
-   (tuple.make
-    (call $import_GRAIN$MODULE$runtime/gc_0_incRef_0
-     (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$incRef_0)
-     (global.get $import_onlyXExported_1159_x_1160)
-    )
-    (i32.const 0)
-   )
+  (call $import_GRAIN$MODULE$runtime/gc_0_incRef_0
+   (global.get $import_GRAIN$MODULE$runtime/gc_0_GRAIN$EXPORT$incRef_0)
+   (global.get $import_onlyXExported_1159_x_1160)
   )
  )
  (func $_start (; has Stack IR ;)

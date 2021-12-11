@@ -13,15 +13,10 @@ basic functionality › division1
  (export \"_start\" (func $_start))
  (export \"GRAIN$TABLE_SIZE\" (global $global_1))
  (func $_gmain (; has Stack IR ;) (result i32)
-  (tuple.extract 0
-   (tuple.make
-    (call $import_GRAIN$MODULE$runtime/dataStructures_0_newRational_0
-     (global.get $import_GRAIN$MODULE$runtime/dataStructures_0_GRAIN$EXPORT$newRational_0)
-     (i32.const 5)
-     (i32.const 2)
-    )
-    (i32.const 0)
-   )
+  (call $import_GRAIN$MODULE$runtime/dataStructures_0_newRational_0
+   (global.get $import_GRAIN$MODULE$runtime/dataStructures_0_GRAIN$EXPORT$newRational_0)
+   (i32.const 5)
+   (i32.const 2)
   )
  )
  (func $_start (; has Stack IR ;)

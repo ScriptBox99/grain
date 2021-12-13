@@ -158,6 +158,8 @@ binop_expr :
   | assign_expr { $1 } p10
 
 pattern :
+  /* FIXME this can't parse more than one or */
+  | pattern eols? PIPE eols? pattern { Pat.or_ ~loc:(symbol_rloc dyp) $1 $5 }
   | pattern colon typ { Pat.constraint_ ~loc:(symbol_rloc dyp) $1 $3 }
   | UNDERSCORE { Pat.any ~loc:(symbol_rloc dyp) () }
   | const { Pat.constant ~loc:(symbol_rloc dyp) $1 }

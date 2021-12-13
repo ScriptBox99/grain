@@ -23,7 +23,7 @@ type decision_tree =
     Leaf(
       int,
       list(pattern),
-      list((Ident.t, Ident.t))
+      list((Ident.t, Ident.t)),
     )
   | /** Represents a guarded branch. The left tree corresponds to a successful
       guard check, and the right tree corresponds to a failed guard check. */
@@ -330,36 +330,94 @@ module MatchTreeCompiler = {
       AExp.comp(ans),
     );
 
-  let rec compile_tree_help = (tree, branches, values, expr, helpI) => {
-    switch (tree) {
-    | Leaf(i, patterns, binds) => 
-      let binds = List.fold_left2((body, pat, value) => {
-        switch (pat.pat_desc) {
-          | TPatAny => body
-          | TPatVar(id, _) => AExp.let_(Nonrecursive, [(id, Comp.imm(value))], body)
-          | TPatAlias()
-        }
-      }, List.fold_left((body, (name, value)) => AExp.let_(Nonrecursive, [(name, Comp.imm(value))], body), helpA(branch), binds), patterns, values)
-      let (_, branch, _) = List.find(((num, _, _)) => num == i, branches);
-    (
-        Comp.if_(
-          ~allocation_type=Type_utils.get_allocation_type(branch.exp_env, branch.exp_type),
-          Imm.const(Const_bool(true)),
-          List.fold_right(
-              ((name, exp), body) =>
-                AExp.let_(Nonrecursive, [(name, exp)], body),
-              extract_bindings(
-                orig_pat,
-                Comp.imm(~allocation_type=HeapAllocated, expr),
+  let get_alias_bindings = (env, binds) => {
+    List.map(
+      ((name, value)) =>
+        BLet(
+          name,
+          Comp.imm(~env, ~allocation_type=HeapAllocated, Imm.id(value)),
+        ),
+      binds,
+    );
+  };
+
+  let get_row_bindings = (env, patterns, values) => {
+    List.fold_left2(
+      (binds, pat, value) => {
+        let rec collect_binds = (pat, binds) => {
+          switch (pat.pat_desc) {
+          | TPatAny => binds
+          | TPatVar(id, _) => [
+              BLet(
+                id,
+                Comp.imm(
+                  ~env,
+                  ~allocation_type=get_allocation_type(env, pat.pat_type),
+                  value,
+                ),
               ),
-              helpA(branch),
-            ),
-          AExp.comp()
-        )
-        ,
-        [],
-      )
-    | Guard(mb, patterns, binds, true_tree, false_tree) =>
+              ...binds,
+            ]
+          | TPatAlias(pat, id, _) =>
+            collect_binds(
+              pat,
+              [
+                BLet(
+                  id,
+                  Comp.imm(
+                    ~env,
+                    ~allocation_type=get_allocation_type(env, pat.pat_type),
+                    value,
+                  ),
+                ),
+                ...binds,
+              ],
+            )
+          | _ =>
+            failwith("compile_tree_help: non-bind pattern in collect_binds")
+          };
+        };
+        collect_binds(pat, []) @ binds;
+      },
+      [],
+      patterns,
+      values,
+    );
+  };
+
+  let get_bindings = (env, row, values, aliases) => {
+    get_alias_bindings(env, aliases) @ get_row_bindings(env, row, values);
+  };
+
+  let wrap_anf = (~allocation_type, anf) => {
+    // This is pretty gross and it would be nice if we had a construct like
+    // Comp.block, which feels appropriate for some scoped computation.
+    // Not a huge deal since the `if` will get optimized away.
+    Comp.if_(
+      ~allocation_type,
+      Imm.const(Const_bool(true)),
+      anf,
+      AExp.comp(
+        Comp.imm(
+          ~allocation_type=StackAllocated(WasmI32),
+          Imm.const(Const_void),
+        ),
+      ),
+    );
+  };
+
+  let rec compile_tree_help = (tree, branches, values, expr, helpA, helpI) => {
+    switch (tree) {
+    | Leaf(i, patterns, aliases) =>
+      let (_, branch, _) = List.find(((num, _, _)) => num == i, branches);
+      let env = branch.exp_env;
+      let allocation_type =
+        Type_utils.get_allocation_type(branch.exp_env, branch.exp_type);
+      (
+        wrap_anf(~allocation_type, helpA(branch)),
+        get_bindings(env, patterns, values, aliases),
+      );
+    | Guard(mb, patterns, aliases, true_tree, false_tree) =>
       let guard =
         switch (mb.mb_guard) {
         | Some(guard) => guard
@@ -369,22 +427,12 @@ module MatchTreeCompiler = {
           )
         };
       let bindings =
-        List.map(
-          ((id, expr)) => BLet(id, expr),
-          extract_bindings(
-            mb.mb_pat,
-            Comp.imm(
-              ~allocation_type=
-                get_allocation_type(mb.mb_pat.pat_env, mb.mb_pat.pat_type),
-              expr,
-            ),
-          ),
-        );
+        get_bindings(mb.mb_body.exp_env, patterns, values, aliases);
       let (cond, cond_setup) = helpI(guard);
       let (true_comp, true_setup) =
-        compile_tree_help(true_tree, branches, values, expr, helpI);
+        compile_tree_help(true_tree, branches, values, expr, helpA, helpI);
       let (false_comp, false_setup) =
-        compile_tree_help(false_tree, branches, values, expr, helpI);
+        compile_tree_help(false_tree, branches, values, expr, helpA, helpI);
       (
         Comp.if_(
           ~allocation_type=true_comp.comp_allocation_type,
@@ -495,20 +543,35 @@ module MatchTreeCompiler = {
       ];
 
       let (rest_ans, rest_setup) =
-        compile_tree_help(rest, new_values, expr, helpI);
+        compile_tree_help(rest, branches, new_values, expr, helpA, helpI);
       (rest_ans, bindings @ rest_setup);
     | Swap(idx, rest_tree) =>
-      compile_tree_help(rest_tree, swap_list(idx, values), expr, helpI)
-    | Switch(switch_type, branches, default_tree) =>
+      compile_tree_help(
+        rest_tree,
+        branches,
+        swap_list(idx, values),
+        expr,
+        helpA,
+        helpI,
+      )
+    | Switch(switch_type, cases, default_tree) =>
       let (cur_value, rest_values) =
         switch (values) {
         | [] => failwith("Impossible (compile_tree_help): Empty value stack")
         | [hd, ...tl] => (hd, tl)
         };
 
-      /* Runs when no branches match */
+      /* Runs when no cases match */
       let base_tree = Option.value(~default=Fail, default_tree);
-      let base = compile_tree_help(base_tree, values, expr, helpI);
+      let base =
+        compile_tree_help(
+          base_tree,
+          branches,
+          rest_values,
+          expr,
+          helpA,
+          helpI,
+        );
       let value_constr_name = Ident.create("match_constructor");
       let value_constr_id = Imm.id(value_constr_name);
       let value_constr =
@@ -544,7 +607,7 @@ module MatchTreeCompiler = {
               ),
             ];
             let (tree_ans, tree_setup) =
-              compile_tree_help(tree, values, expr, helpI);
+              compile_tree_help(tree, branches, values, expr, helpA, helpI);
             let ans =
               Comp.if_(
                 ~allocation_type=tree_ans.comp_allocation_type,
@@ -555,7 +618,7 @@ module MatchTreeCompiler = {
             (ans, setup);
           },
           base,
-          branches,
+          cases,
         );
       (
         switch_body_ans,
@@ -570,34 +633,13 @@ module MatchTreeCompiler = {
     /*prerr_string "Compiling tree:";
       prerr_string (Sexplib.Sexp.to_string_hum (sexp_of_decision_tree tree));
       prerr_newline();*/
-    let (ans, setup) = compile_tree_help(tree, branches, [expr], expr, helpI);
-    let jmp_name = Ident.create("match_dest");
-    let setup = setup @ [BLet(jmp_name, ans)];
-    let switch_branches =
-      List.map(
-        ((tag, branch, orig_pat)) =>
-          (
-            tag,
-            List.fold_right(
-              ((name, exp), body) =>
-                AExp.let_(Nonrecursive, [(name, exp)], body),
-              extract_bindings(
-                orig_pat,
-                Comp.imm(~allocation_type=HeapAllocated, expr),
-              ),
-              helpA(branch),
-            ),
-          ),
-        branches,
-      );
-    (
-      Comp.switch_(
-        ~allocation_type,
-        Imm.id(jmp_name),
-        switch_branches,
-        partial,
-      ),
-      setup,
+    compile_tree_help(
+      tree,
+      branches,
+      [expr],
+      expr,
+      helpA,
+      helpI,
     );
   };
 };
@@ -833,9 +875,8 @@ let rec default_matrix = (cur, mtx) => {
     | [] => failwith("Impossible: Empty pattern row in default_matrix")
     | [{pat_desc} as p, ...ptl] =>
       switch (pat_desc) {
-      | TPatAlias(_, alias, _) when pattern_always_matches(p) => [
-          (ptl, [(alias, cur), ...binds]),
-        ]
+      | TPatAlias(inner, alias, _) when pattern_always_matches(p) =>
+        default_rows([inner, ...ptl], [(alias, cur), ...binds])
       | _ when pattern_always_matches(p) => [(ptl, binds)]
       | TPatOr(p1, p2) =>
         default_rows([p1, ...ptl], binds)
@@ -859,14 +900,14 @@ let rec default_matrix = (cur, mtx) => {
 let rec compile_matrix = mtx =>
   switch (mtx) {
   | [] => Fail /* No branches to match. */
-  | [(pats, binds, (mb, i)), ...rest_mtx]
+  | [(pats, aliases, (mb, i)), ...rest_mtx]
       when List.for_all(pattern_always_matches, pats) =>
     let rest_tree =
       switch (mb.mb_guard) {
       | Some(guard) =>
         let result = compile_matrix(rest_mtx);
-        Guard(mb, Leaf(i), result);
-      | None => Leaf(i)
+        Guard(mb, pats, aliases, Leaf(i, pats, aliases), result);
+      | None => Leaf(i, pats, aliases)
       };
     rest_tree;
   | _ when !col_is_wildcard(mtx, 0) =>
